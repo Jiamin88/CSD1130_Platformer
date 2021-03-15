@@ -51,10 +51,10 @@ enum TYPE_OBJECT
 	TYPE_OBJECT_ENEMY1,			//3
 	TYPE_OBJECT_COIN			//4
 };
-
 //State machine states
 enum STATE
 {
+
 	STATE_NONE,
 	STATE_GOING_LEFT,
 	STATE_GOING_RIGHT
@@ -122,6 +122,7 @@ static int				TotalCoins;
 static GameObj* sGameObjList;
 static unsigned int		sGameObjNum;
 
+
 // list of object instances
 static GameObjInst* sGameObjInstList;
 static unsigned int		sGameObjInstNum;
@@ -133,6 +134,7 @@ static int				BINARY_MAP_WIDTH;
 static int				BINARY_MAP_HEIGHT;
 static GameObjInst* pBlackInstance;
 static GameObjInst* pWhiteInstance;
+
 static AEMtx33			MapTransform;
 
 int						GetCellValue( int X, int Y );
@@ -155,6 +157,8 @@ static GameObjInst* pHero;
 void					EnemyStateMachine( GameObjInst* pInst );
 
 
+float GridWidth = 40.0f;
+float GridHeight = 40.0f;
 /******************************************************************************/
 /*!
 
@@ -172,7 +176,6 @@ void GameStatePlatformLoad( void )
 	//Creating the black object
 	pObj = sGameObjList + sGameObjNum++;
 	pObj->type = TYPE_OBJECT_EMPTY;
-
 
 	AEGfxMeshStart();
 	AEGfxTriAdd(
@@ -212,6 +215,7 @@ void GameStatePlatformLoad( void )
 	//Creating the hero object
 	pObj = sGameObjList + sGameObjNum++;
 	pObj->type = TYPE_OBJECT_HERO;
+
 
 
 	AEGfxMeshStart();
@@ -275,8 +279,10 @@ void GameStatePlatformLoad( void )
 	BINARY_MAP_HEIGHT = 0;
 
 	//Importing Data
-	if ( !ImportMapDataFromFile( "Resources/Levels/Exported.txt" ) )
+	if ( !ImportMapDataFromFile( "../Resources/Levels/Exported2.txt" ) )
+	{
 		gGameStateNext = GS_QUIT;
+	}
 
 
 	//Computing the matrix which take a point out of the normalized coordinates system
@@ -292,9 +298,13 @@ void GameStatePlatformLoad( void )
 	Concatenate scale and translate and save the result in "MapTransform"
 	***********/
 	AEMtx33 scale, trans;
-	//AEMtx33Scale( &scale, , _height );
-	//AEMtx33Trans( &trans, _position.x, _position.y );
-	//AEMtx33Concat( &MapTransform, &rotate, &scale );
+
+
+	AEMtx33Trans( &trans, -( ( float )BINARY_MAP_WIDTH ) / 2.0f, -( ( float )BINARY_MAP_HEIGHT ) / 2.0f );
+	AEMtx33Scale( &scale, GridWidth, GridHeight );
+	AEMtx33Concat( &MapTransform, &scale, &trans );
+
+
 	UNREFERENCED_PARAMETER( scale );
 	UNREFERENCED_PARAMETER( trans );
 }
@@ -307,7 +317,7 @@ void GameStatePlatformLoad( void )
 void GameStatePlatformInit( void )
 {
 	int i, j;
-	UNREFERENCED_PARAMETER( j );
+	//UNREFERENCED_PARAMETER( j );
 
 	pHero = 0;
 	pBlackInstance = 0;
@@ -362,12 +372,30 @@ void GameStatePlatformInit( void )
 			Set its position depending on its array indices in MapData
 
 	***********/
+
 	for ( i = 0; i < BINARY_MAP_WIDTH; ++i )
+	{
 		for ( j = 0; j < BINARY_MAP_HEIGHT; ++j )
 		{
+			AEVec2 Position{ ( float )i + 0.5f , ( float )j + 0.5f };
+			if ( MapData[i][j] == TYPE_OBJECT_HERO )
+			{
+				pHero = gameObjInstCreate( TYPE_OBJECT_HERO, 1.0f, &Position, 0, 0.0f, STATE_NONE );
+				Hero_Initial_X = static_cast< int >( Position.x );
+				Hero_Initial_Y = static_cast< int >( Position.y );
+			}
+			if ( MapData[i][j] == TYPE_OBJECT_ENEMY1 )
+			{
+				gameObjInstCreate( TYPE_OBJECT_ENEMY1, 1.0f, &Position, 0, 0.0f, STATE_GOING_LEFT );
+			}
+			if ( MapData[i][j] == TYPE_OBJECT_COIN )
+			{
+				gameObjInstCreate( TYPE_OBJECT_COIN, 1.0f, &Position, 0, 0.0f, STATE_NONE );
+			}
 		}
-}
 
+	}
+}
 /******************************************************************************/
 /*!
 
@@ -380,6 +408,7 @@ void GameStatePlatformUpdate( void )
 
 	UNREFERENCED_PARAMETER( j );
 	UNREFERENCED_PARAMETER( pInst );
+
 	//Handle Input
 	/***********
 	if right is pressed
@@ -396,6 +425,32 @@ void GameStatePlatformUpdate( void )
 	if Escape is pressed
 		Exit to menu
 	***********/
+
+
+	if ( AEInputCheckCurr( AEVK_RIGHT ) )
+	{
+		pHero->velCurr.x = MOVE_VELOCITY_HERO;
+	}
+	else if ( AEInputCheckCurr( AEVK_LEFT ) )
+	{
+		pHero->velCurr.x = -MOVE_VELOCITY_HERO;
+	}
+	else
+	{
+		pHero->velCurr.x = 0;
+	}
+
+	if ( AEInputCheckCurr( AEVK_SPACE ) && ( pHero->gridCollisionFlag & COLLISION_BOTTOM ) == COLLISION_BOTTOM )
+	{
+		pHero->velCurr.y = JUMP_VELOCITY;
+	}
+
+	//////////////////////////////////////////////////////////////////
+	//if ( AEInputCheckTriggered( AEVK_ESCAPE ) )
+	//{
+
+	//}
+	//////////////////////////////////////////////////////////////////
 
 
 	//Update object instances physics and behavior
@@ -415,6 +470,15 @@ void GameStatePlatformUpdate( void )
 		If object instance is an enemy
 			Apply enemy state machine
 		****************/
+		if ( pInst->pObject->type != TYPE_OBJECT_COIN )
+		{
+			pInst->velCurr.y = GRAVITY * g_dt + pInst->velCurr.y;
+
+			if ( pInst->pObject->type == TYPE_OBJECT_ENEMY1 )
+			{
+				EnemyStateMachine( pInst );
+			}
+		}
 	}
 
 	//Update object instances positions
@@ -432,6 +496,15 @@ void GameStatePlatformUpdate( void )
 			boundingRect_min = -BOUNDING_RECT_SIZE * instance->scale + instance->pos
 			boundingRect_max = BOUNDING_RECT_SIZE * instance->scale + instance->pos
 		**********/
+		pInst->posCurr.x = pInst->velCurr.x * g_dt + pInst->posCurr.x;
+		pInst->posCurr.y = pInst->velCurr.y * g_dt + pInst->posCurr.y;
+
+		pInst->boundingBox.min.x = -0.5 * pInst->scale + pInst->posCurr.x;
+		pInst->boundingBox.min.y = -0.5 * pInst->scale + pInst->posCurr.y;
+
+		pInst->boundingBox.max.x = 0.5 * pInst->scale + pInst->posCurr.x;
+		pInst->boundingBox.max.y = 0.5 * pInst->scale + pInst->posCurr.y;
+
 	}
 
 	//Check for grid collision
@@ -462,9 +535,37 @@ void GameStatePlatformUpdate( void )
 			Snap to cell on X axis
 			Velocity X = 0
 		*************/
+
+
+
+		pInst->gridCollisionFlag = CheckInstanceBinaryMapCollision( pInst->posCurr.x, pInst->posCurr.y, pInst->scale, pInst->scale );
+
+		if ( ( COLLISION_BOTTOM & pInst->gridCollisionFlag ) == COLLISION_BOTTOM )
+		{
+			SnapToCell( &pInst->posCurr.y );
+			pInst->velCurr.y = 0;
+
+		}
+
+		if ( ( COLLISION_TOP & pInst->gridCollisionFlag ) == COLLISION_TOP )
+		{
+			SnapToCell( &pInst->posCurr.y );
+			pInst->velCurr.y = 0;
+		}
+
+		if ( ( COLLISION_LEFT & pInst->gridCollisionFlag ) == COLLISION_LEFT )
+		{
+			SnapToCell( &pInst->posCurr.x );
+			pInst->velCurr.x = 0;
+		}
+
+		if ( ( COLLISION_RIGHT & pInst->gridCollisionFlag ) == COLLISION_RIGHT )
+		{
+			SnapToCell( &pInst->posCurr.x );
+			pInst->velCurr.x = 0;
+		}
+
 	}
-
-
 	//Checking for collision among object instances:
 	//Hero against enemies
 	//Hero against coins
@@ -486,6 +587,45 @@ void GameStatePlatformUpdate( void )
 
 	for ( i = 0; i < GAME_OBJ_INST_NUM_MAX; ++i )
 	{
+		pInst = sGameObjInstList + i;
+
+		// skip non-active object
+		if ( 0 == ( pInst->flag & FLAG_ACTIVE ) )
+			continue;
+		if ( ( pInst->flag & FLAG_NON_COLLIDABLE ) == FLAG_NON_COLLIDABLE )
+			continue;
+		if ( pInst->pObject->type == TYPE_OBJECT_ENEMY1 )
+		{
+			if ( CollisionIntersection_RectRect( pInst->boundingBox, pInst->velCurr, pHero->boundingBox, pHero->velCurr ) )
+			{
+				HeroLives--;
+				if ( HeroLives > 0 )
+				{
+					pHero->posCurr = { ( float )Hero_Initial_X, ( float )Hero_Initial_Y };
+				}
+				else
+				{
+					gGameStateNext = GS_RESTART;
+				}
+			}
+		}
+		if ( pInst->pObject->type == TYPE_OBJECT_COIN )
+		{
+			if ( CollisionIntersection_RectRect( pInst->boundingBox, pInst->velCurr, pHero->boundingBox, pHero->velCurr ) )
+			{
+				pInst->flag &= ~FLAG_ACTIVE;
+				TotalCoins--;
+				//////////////////////////////////////////////////////////////////
+				//if ( TotalCoins <= 0 )
+				/*{
+
+				}*/
+				//////////////////////////////////////////////////////////////////
+			}
+
+		}
+
+
 	}
 
 
@@ -502,11 +642,22 @@ void GameStatePlatformUpdate( void )
 		AEMtx33Scale( &scale, pInst->scale, pInst->scale );
 		AEMtx33Rot( &rot, pInst->dirCurr );
 		AEMtx33Trans( &trans, pInst->posCurr.x, pInst->posCurr.y );
-
+		AEMtx33Concat( &scale, &rot, &scale );
+		AEMtx33Concat( &pInst->transform, &trans, &scale );
 
 	}
-}
 
+
+	//if(LevelTwo && pHero )
+	if ( pHero )
+	{
+		AEMtx33 scale, trans;
+		AEMtx33Trans( &trans, -pHero->posCurr.x, -pHero->posCurr.y );
+		AEMtx33Scale( &scale, 30, 30 );
+		AEMtx33Concat( &MapTransform, &scale, &trans );
+	}
+
+}
 /******************************************************************************/
 /*!
 
@@ -514,12 +665,14 @@ void GameStatePlatformUpdate( void )
 /******************************************************************************/
 void GameStatePlatformDraw( void )
 {
+
+	AEGfxSetRenderMode( AEGfxRenderMode::AE_GFX_RM_COLOR );
+
 	//Drawing the tile map (the grid)
 	int i, j;
 	AEMtx33 cellTranslation, cellFinalTransformation;
-
-	UNREFERENCED_PARAMETER( cellTranslation );
-	UNREFERENCED_PARAMETER( cellFinalTransformation );
+	/*UNREFERENCED_PARAMETER( cellTranslation );
+	UNREFERENCED_PARAMETER( cellFinalTransformation );*/
 
 	//Drawing the tile map
 
@@ -542,9 +695,23 @@ void GameStatePlatformDraw( void )
 			Use the white instance in case the cell's value is TYPE_OBJECT_COLLISION
 	*********/
 	for ( i = 0; i < BINARY_MAP_WIDTH; ++i )
+	{
 		for ( j = 0; j < BINARY_MAP_HEIGHT; ++j )
 		{
+			AEMtx33Trans( &cellTranslation, ( float )i + 0.5f, ( float )j + 0.5f );
+			AEMtx33Concat( &cellFinalTransformation, &MapTransform, &cellTranslation );
+			AEGfxSetTransform( cellFinalTransformation.m );
+			if ( BinaryCollisionArray[i][j] == TYPE_OBJECT_EMPTY )
+			{
+				AEGfxMeshDraw( pBlackInstance->pObject->pMesh, AE_GFX_MDM_TRIANGLES );
+			}
+			if ( BinaryCollisionArray[i][j] == TYPE_OBJECT_COLLISION )
+			{
+				AEGfxMeshDraw( pWhiteInstance->pObject->pMesh, AE_GFX_MDM_TRIANGLES );
+			}
 		}
+	}
+
 
 
 
@@ -564,6 +731,10 @@ void GameStatePlatformDraw( void )
 			continue;
 
 		//Don't forget to concatenate the MapTransform matrix with the transformation of each game object instance
+		AEMtx33 TempMapTransform;
+		AEMtx33Concat( &TempMapTransform, &MapTransform, &pInst->transform );
+		AEGfxSetTransform( TempMapTransform.m );
+		AEGfxMeshDraw( pInst->pObject->pMesh, AE_GFX_MDM_TRIANGLES );
 
 	}
 
@@ -597,9 +768,14 @@ void GameStatePlatformUnload( void )
 	for ( u32 i = 0; i < sGameObjNum; i++ )
 		AEGfxMeshFree( sGameObjList[i].pMesh );
 
+
+	free( sGameObjList );
+	free( sGameObjInstList );
+
 	/*********
 	Free the map data
 	*********/
+	FreeMapData();
 }
 
 /******************************************************************************/
@@ -761,6 +937,7 @@ void SnapToCell( float* Coordinate )
 {
 	int temp = ( int )( *Coordinate );
 	*Coordinate = ( float )temp + 0.50f;
+
 }
 
 /******************************************************************************/
@@ -861,15 +1038,75 @@ void EnemyStateMachine( GameObjInst* pInst )
 	***********/
 
 
-	switch ( STATE_GOING_LEFT )
+	switch ( pInst->state )
 	{
-		case INNER_STATE_ON_ENTER: 
-			pInst->velCurr.x = -MOVE_VELOCITY_ENEMY;
-			pInst->innerState = INNER_STATE_ON_UPDATE;
+		case  (STATE_GOING_LEFT):
+
+			switch ( pInst->innerState )
+			{
+				case (INNER_STATE_ON_ENTER):
+					pInst->velCurr.x = -MOVE_VELOCITY_ENEMY;
+					pInst->innerState = INNER_STATE_ON_UPDATE;
+					break;
+				case (INNER_STATE_ON_UPDATE):
+					
+					if ( ( pInst->gridCollisionFlag & COLLISION_LEFT ) == COLLISION_LEFT || !GetCellValue( ( ( int )pInst->posCurr.x ) - 1, ( ( int )pInst->posCurr.y ) - 1 ) )
+					{
+						pInst->counter = ENEMY_IDLE_TIME;
+						pInst->innerState = INNER_STATE_ON_EXIT;
+						pInst->velCurr.x = 0;
+					}
+					break;
+				case (INNER_STATE_ON_EXIT):
+					pInst->counter -= g_dt;
+					if ( pInst->counter <= 0 )
+					{
+
+						pInst->state = STATE_GOING_RIGHT;
+						pInst->innerState = INNER_STATE_ON_ENTER;
+					}
+					break;
+			}
 			break;
-		case INNER_STATE_ON_UPDATE : 
-			if ( )
+
+		case (STATE_GOING_RIGHT):
+
+
+			switch ( pInst->innerState )
+			{
+				case (INNER_STATE_ON_ENTER):
+					pInst->velCurr.x = MOVE_VELOCITY_ENEMY;
+					pInst->innerState = INNER_STATE_ON_UPDATE;
+					break;
+				case (INNER_STATE_ON_UPDATE):
+					if ( ( pInst->gridCollisionFlag & COLLISION_RIGHT ) == COLLISION_RIGHT || !GetCellValue( ( ( int )pInst->posCurr.x ) + 1, ( ( int )pInst->posCurr.y ) - 1 ) )
+					{
+						pInst->counter = ENEMY_IDLE_TIME;
+						pInst->innerState = INNER_STATE_ON_EXIT;
+						pInst->velCurr.x = 0;
+					}
+					break;
+				case (INNER_STATE_ON_EXIT):
+					pInst->counter -= g_dt;
+					if ( pInst->counter <= 0 )
+					{
+						pInst->state = STATE_GOING_LEFT;
+						pInst->innerState = INNER_STATE_ON_ENTER;
+					}
+					break;
+			}
+			break;
+
+
 	}
+
+
+
+
+
+
+
+
 
 	UNREFERENCED_PARAMETER( pInst );
 }

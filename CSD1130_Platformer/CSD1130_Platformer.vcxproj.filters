@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="GameState_MainMenu.cpp" />
+    <ClCompile Include="Source\Collision.cpp" />
+    <ClCompile Include="Source\GameStateMgr.cpp" />
+    <ClCompile Include="Source\GameState_Platform.cpp" />
+    <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Sprite.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Include\Collision.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="GameState_MainMenu.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\GameState_Platform.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\GameStateList.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\GameStateMgr.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Sprite.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\main.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header">
+      <UniqueIdentifier>{24f7451a-05b4-470c-9537-54e78b6f10e0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
