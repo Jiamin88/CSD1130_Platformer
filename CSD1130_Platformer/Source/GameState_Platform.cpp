@@ -13,7 +13,7 @@ prior written consent of DigiPen Institute of Technology is prohibited.
  /******************************************************************************/
 
 #include "main.h"
-#include "../ParticleSystem.h"
+#include "ParticleSystem.h"
 
 
 /******************************************************************************/
@@ -25,7 +25,7 @@ const unsigned int	GAME_OBJ_NUM_MAX = 32;	//The total number of different object
 const unsigned int	GAME_OBJ_INST_NUM_MAX = 2048;	//The total number of different game object instances
 
 //Gameplay related variables and values
-const float			GRAVITY = -20.0f;
+const float			GRAVITY = -3.0f;
 const float			JUMP_VELOCITY = 11.0f;
 const float			MOVE_VELOCITY_HERO = 4.0f;
 const float			MOVE_VELOCITY_ENEMY = 7.5f;
@@ -122,12 +122,12 @@ static int				TotalCoins;
 static int				TotalCoinsCollected;
 
 // list of original objects
-static GameObj* sGameObjList;
+static GameObj*			sGameObjList;
 static unsigned int		sGameObjNum;
 
 
 // list of object instances
-static GameObjInst* sGameObjInstList;
+static GameObjInst*		sGameObjInstList;
 static unsigned int		sGameObjInstNum;
 
 //Binary map data
@@ -135,8 +135,8 @@ static int**			MapData;
 static int**			BinaryCollisionArray;
 static int				BINARY_MAP_WIDTH;
 static int				BINARY_MAP_HEIGHT;
-static GameObjInst* pBlackInstance;
-static GameObjInst* pWhiteInstance;
+static GameObjInst*		pBlackInstance;
+static GameObjInst*		pWhiteInstance;
 
 static AEMtx33			MapTransform;
 
@@ -148,13 +148,13 @@ int						ImportMapDataFromFile( char* FileName );
 void					FreeMapData( void );
 
 // function to create/destroy a game object instance
-static GameObjInst* gameObjInstCreate( unsigned int type, float scale,
+static GameObjInst*		gameObjInstCreate( unsigned int type, float scale,
 									   AEVec2* pPos, AEVec2* pVel,
 									   float dir, enum STATE startState );
 static void				gameObjInstDestroy( GameObjInst* pInst );
 
 //We need a pointer to the hero's instance for input purposes
-static GameObjInst* pHero;
+static GameObjInst*		pHero;
 
 //State machine functions
 void					EnemyStateMachine( GameObjInst* pInst );
@@ -162,14 +162,14 @@ void					EnemyStateMachine( GameObjInst* pInst );
 
 
 f32 TextWidth, TextHeight;
-
 float GridWidth = 40.0f;
 float GridHeight = 40.0f;
 
+// Extra Credit !
 ParticleSystem ps;
 /******************************************************************************/
 /*!
-
+	"Load" function of this state
 */
 /******************************************************************************/
 void GameStatePlatformLoad( void )
@@ -318,18 +318,18 @@ void GameStatePlatformLoad( void )
 
 
 	AEMtx33Trans( &trans, -( ( float )BINARY_MAP_WIDTH ) / 2.0f, -( ( float )BINARY_MAP_HEIGHT ) / 2.0f );
-	AEMtx33Scale( &scale, AEGetWindowWidth() / BINARY_MAP_WIDTH, AEGetWindowHeight() / BINARY_MAP_HEIGHT );
+	AEMtx33Scale( &scale, (float)(AEGetWindowWidth() / BINARY_MAP_WIDTH),(float)( AEGetWindowHeight() / BINARY_MAP_HEIGHT ));
 	AEMtx33Concat( &MapTransform, &scale, &trans );
 
 
-	/*UNREFERENCED_PARAMETER( scale );
-	UNREFERENCED_PARAMETER( trans );*/
+	UNREFERENCED_PARAMETER( scale );
+	UNREFERENCED_PARAMETER( trans );
 
 }
 
 /******************************************************************************/
 /*!
-
+	"Initialize" function of this state
 */
 /******************************************************************************/
 void GameStatePlatformInit( void )
@@ -360,11 +360,11 @@ void GameStatePlatformInit( void )
 	//Setting the inital number of hero lives
 	HeroLives = HERO_LIVES;
 
-	GameObjInst* pInst;
+	/*GameObjInst* pInst;
 	AEVec2 Pos;
 
 	UNREFERENCED_PARAMETER( pInst );
-	UNREFERENCED_PARAMETER( Pos );
+	UNREFERENCED_PARAMETER( Pos );*/
 
 	// creating the main character, the enemies and the coins according 
 	// to their initial positions in MapData
@@ -419,7 +419,7 @@ void GameStatePlatformInit( void )
 }
 /******************************************************************************/
 /*!
-
+	"Update" function of this state
 */
 /******************************************************************************/
 void GameStatePlatformUpdate( void )
@@ -521,11 +521,11 @@ void GameStatePlatformUpdate( void )
 		pInst->posCurr.x = pInst->velCurr.x * g_dt + pInst->posCurr.x;
 		pInst->posCurr.y = pInst->velCurr.y * g_dt + pInst->posCurr.y;
 
-		pInst->boundingBox.min.x = -0.5 * pInst->scale + pInst->posCurr.x;
-		pInst->boundingBox.min.y = -0.5 * pInst->scale + pInst->posCurr.y;
+		pInst->boundingBox.min.x = -0.5f * pInst->scale + pInst->posCurr.x;
+		pInst->boundingBox.min.y = -0.5f * pInst->scale + pInst->posCurr.y;
 
-		pInst->boundingBox.max.x = 0.5 * pInst->scale + pInst->posCurr.x;
-		pInst->boundingBox.max.y = 0.5 * pInst->scale + pInst->posCurr.y;
+		pInst->boundingBox.max.x = 0.5f * pInst->scale + pInst->posCurr.x;
+		pInst->boundingBox.max.y = 0.5f * pInst->scale + pInst->posCurr.y;
 
 	}
 
@@ -627,7 +627,7 @@ void GameStatePlatformUpdate( void )
 				}
 				else if ( HeroLives == 0 )
 				{
-					gGameStateNext = GS_MAINMENU;
+					gGameStateNext = GS_RESTART;
 				}
 			}
 		}

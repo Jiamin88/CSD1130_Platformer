@@ -1,6 +1,6 @@
 #include <iostream>
 #include "main.h"
-#include "../Sprite.h"
+#include "Sprite.h"
 
 
 
@@ -71,7 +71,6 @@ void GameStateMainMenuUpdate( void )
 	
 		if ( AEInputCheckTriggered( AEVK_LBUTTON ) )
 		{
-			std::cout << "herereee" << std::endl;
 			is_level2 = false;
 			gGameStateNext = GS_PLATFORM;
 		}
@@ -86,7 +85,6 @@ void GameStateMainMenuUpdate( void )
 		
 		if ( AEInputCheckTriggered( AEVK_LBUTTON ) )
 		{
-			std::cout << "alohhahaaaa" << std::endl;
 			is_level2 = true;
 			gGameStateNext = GS_PLATFORM;
 		}
@@ -101,7 +99,6 @@ void GameStateMainMenuUpdate( void )
 
 		if ( AEInputCheckTriggered( AEVK_LBUTTON ) )
 		{
-			std::cout << "huhuhuhhu" << std::endl;
 			gGameStateNext = GS_QUIT;
 		}
 	}

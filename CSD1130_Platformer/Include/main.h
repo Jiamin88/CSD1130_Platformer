@@ -33,7 +33,7 @@ extern char		fontId;
 #include "GameStateMgr.h"
 #include "GameState_Platform.h"
 #include "Collision.h"
-#include "../GameState_MainMenu.h"
+#include "GameState_MainMenu.h"
 #include <iostream>
 #include <fstream>
 #include <string>
