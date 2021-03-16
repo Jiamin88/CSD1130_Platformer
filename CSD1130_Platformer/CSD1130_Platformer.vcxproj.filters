@@ -7,6 +7,7 @@
     <ClCompile Include="Source\GameState_Platform.cpp" />
     <ClCompile Include="Source\main.cpp" />
     <ClCompile Include="Sprite.cpp" />
+    <ClCompile Include="ParticleSystem.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Collision.h">
@@ -28,6 +29,9 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="Include\main.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleSystem.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

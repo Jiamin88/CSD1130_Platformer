@@ -21,6 +21,8 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 
 extern float	g_dt;
 extern double	g_appTime;
+extern bool		is_level2;
+extern char		fontId;
 
 // ---------------------------------------------------------------------------
 // includes

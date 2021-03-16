@@ -21,6 +21,8 @@ prior written consent of DigiPen Institute of Technology is prohibited.
 // Globals
 float	 g_dt;
 double	 g_appTime;
+bool		is_level2 = false;
+char		fontId;
 
 
 /******************************************************************************/
@@ -49,6 +51,8 @@ int WINAPI WinMain( HINSTANCE instanceH, HINSTANCE prevInstanceH, LPSTR command_
 
 	//set background color
 	AEGfxSetBackgroundColor( 0.53f, 0.81f, 0.98f );
+
+	fontId = AEGfxCreateFont( "../Resources/Fonts/Strawberry_Muffins_Demo.ttf", 20 );
 
 	GameStateMgrInit( GS_MAINMENU );
 
